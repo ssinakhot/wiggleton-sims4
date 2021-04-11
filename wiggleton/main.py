@@ -22,7 +22,7 @@ def _modify_funds(amount: int, _connection=None):
 
 
 @sims4.commands.Command('set_motive_household', command_type=sims4.commands.CommandType.Live)
-def set_motives(motive: str, value: int, _connection=None):
+def set_motive_household(motive: str, value: int, _connection=None):
     tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
     for sim_info in tgt_client.selectable_sims:
         stat_type = get_tunable_instance(sims4.resources.Types.STATISTIC, motive, exact_match=True)
@@ -42,7 +42,7 @@ def randomize_motives_household(_connection=None):
 
 
 @sims4.commands.Command('fill_motives_household', command_type=sims4.commands.CommandType.Live)
-def randomize_motives_household(_connection=None):
+def fill_motives_household(_connection=None):
     tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
     for sim_info in tgt_client.selectable_sims:
         all_motives = ['motive_fun', 'motive_social', 'motive_hygiene', 'motive_hunger', 'motive_energy',
@@ -53,7 +53,7 @@ def randomize_motives_household(_connection=None):
 
 
 @sims4.commands.Command('tank_motives_household', command_type=sims4.commands.CommandType.Live)
-def randomize_motives_household(_connection=None):
+def tank_motives_household(_connection=None):
     tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
     for sim_info in tgt_client.selectable_sims:
         all_motives = ['motive_fun', 'motive_social', 'motive_hygiene', 'motive_hunger', 'motive_energy',
@@ -61,6 +61,24 @@ def randomize_motives_household(_connection=None):
         for motive in all_motives:
             stat_type = get_tunable_instance(sims4.resources.Types.STATISTIC, motive, exact_match=True)
             sim_info.set_stat_value(stat_type, stat_type.min_value)
+
+
+@sims4.commands.Command('remove_random_sim_buffs', command_type=sims4.commands.CommandType.Live)
+def remove_random_sim_buffs(_connection=None):
+    tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
+    sim_infos = tgt_client.selectable_sims._selectable_sim_infos
+    random_index = random.uniform(0, len(sim_infos))
+    selected_sim_info = sim_infos[random_index]
+    for buff_type in services.buff_manager().types.values():
+        if selected_sim_info.has_buff(buff_type):
+            if buff_type.commodity is not None:
+                if not selected_sim_info.is_valid_statistic_to_remove(buff_type.commodity):
+                    continue
+                tracker = selected_sim_info.get_tracker(buff_type.commodity)
+                commodity_inst = tracker.get_statistic(buff_type.commodity)
+                if commodity_inst is not None and commodity_inst.core:
+                    continue
+            selected_sim_info.remove_buff_by_type(buff_type)
 
 
 @sims4.commands.Command('redemption', command_type=sims4.commands.CommandType.Live)
