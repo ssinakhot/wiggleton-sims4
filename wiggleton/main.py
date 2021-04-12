@@ -8,6 +8,7 @@ from os import listdir, remove
 from os.path import isfile, join
 from threading import Thread
 from server_commands.argument_helpers import get_tunable_instance
+from traits import traits
 
 from wiggleton.helpers import injector
 from wiggleton.helpers.customlogging import wiggleton_log
@@ -61,24 +62,6 @@ def tank_motives_household(_connection=None):
         for motive in all_motives:
             stat_type = get_tunable_instance(sims4.resources.Types.STATISTIC, motive, exact_match=True)
             sim_info.set_stat_value(stat_type, stat_type.min_value)
-
-
-@sims4.commands.Command('remove_random_sim_buffs', command_type=sims4.commands.CommandType.Live)
-def remove_random_sim_buffs(_connection=None):
-    tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
-    sim_infos = tgt_client.selectable_sims._selectable_sim_infos
-    random_index = random.uniform(0, len(sim_infos))
-    selected_sim_info = sim_infos[random_index]
-    for buff_type in services.buff_manager().types.values():
-        if selected_sim_info.has_buff(buff_type):
-            if buff_type.commodity is not None:
-                if not selected_sim_info.is_valid_statistic_to_remove(buff_type.commodity):
-                    continue
-                tracker = selected_sim_info.get_tracker(buff_type.commodity)
-                commodity_inst = tracker.get_statistic(buff_type.commodity)
-                if commodity_inst is not None and commodity_inst.core:
-                    continue
-            selected_sim_info.remove_buff_by_type(buff_type)
 
 
 @sims4.commands.Command('redemption', command_type=sims4.commands.CommandType.Live)
