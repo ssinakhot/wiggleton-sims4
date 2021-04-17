@@ -8,6 +8,7 @@ from os import listdir, remove
 from os.path import isfile, join
 from threading import Thread
 from server_commands.argument_helpers import get_tunable_instance
+from sims import sim
 from traits import traits
 
 from wiggleton.helpers import injector
@@ -17,9 +18,13 @@ from wiggleton.helpers.customlogging import wiggleton_log
 @sims4.commands.Command('modify_funds', command_type=sims4.commands.CommandType.Live)
 def _modify_funds(amount: int, _connection=None):
     tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
+    current_amount = sim.family_funds.money
+    if amount < 0 and (current_amount - amount) < 0:
+        amount = 0 - current_amount
     server_commands.sim_commands.modify_fund_helper(amount,
                                                     server_commands.sim_commands.Consts_pb2.TELEMETRY_MONEY_CHEAT,
                                                     tgt_client.active_sim)
+
 
 
 @sims4.commands.Command('set_motive_household', command_type=sims4.commands.CommandType.Live)
