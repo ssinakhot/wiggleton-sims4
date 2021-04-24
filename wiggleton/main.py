@@ -7,12 +7,40 @@ import server_commands.sim_commands
 from os import listdir, remove
 from os.path import isfile, join
 from threading import Thread
-from server_commands.argument_helpers import get_tunable_instance
+from server_commands.argument_helpers import get_tunable_instance, get_optional_target, OptionalSimInfoParam
 from sims import sim
 from traits import traits
 
 from wiggleton.helpers import injector
 from wiggleton.helpers.customlogging import wiggleton_log
+
+
+@sims4.commands.Command('get_sims', command_type=sims4.commands.CommandType.Live)
+def get_sims(_connection=None):
+    tgt_client = server_commands.sim_commands.services.client_manager().get(_connection)
+    for sim_info in tgt_client.selectable_sims:
+        wiggleton_log(str(sim_info.id) + "|" + sim_info.first_name + "|" + sim_info.last_name)
+
+
+@sims4.commands.Command('buffs', command_type=sims4.commands.CommandType.Live)
+def buffs(opt_target:OptionalSimInfoParam=None, remove:bool=False, _connection=None):
+    target = get_optional_target(opt_target, _connection=_connection, target_type=OptionalSimInfoParam)
+    if target is None:
+        return False
+    current_timestamp = services.time_service().sim_now.absolute_ticks()
+    wiggleton_log(str(current_timestamp) + "|" + str(target.id) + "|" + target.first_name + "|" + target.last_name)
+    buffs_to_remove = []
+    for buff_entry in target.Buffs:
+        (timestamp, rate_multiplier) = buff_entry.get_timeout_time()
+        if timestamp == 0:
+            continue
+
+        wiggleton_log(str(buff_entry) + "|" + str(timestamp - current_timestamp) + "|" + str(rate_multiplier))
+        if remove:
+            buffs_to_remove.append(buff_entry)
+
+    for buff_entry in buffs_to_remove:
+        target.Buffs.remove_buff_entry(buff_entry)
 
 
 @sims4.commands.Command('modify_funds', command_type=sims4.commands.CommandType.Live)
