@@ -4,6 +4,8 @@
 import inspect
 from functools import wraps
 
+from wiggleton.helpers.logging import log
+
 
 def inject(target_object, target_function_name, safe=False):
     if safe and not hasattr(target_object, target_function_name):
@@ -34,3 +36,16 @@ def inject(target_object, target_function_name, safe=False):
         return wrap_function
 
     return _injected
+
+
+def create_injection(source, dest):
+
+    def function_to_inject(*args, **kwargs):
+        try:
+            new_res = dest(*args, **kwargs)
+            return new_res
+        except Exception as e:
+            log('Injected Function Error (' + source.__name__ + '): {}'.format(e))
+            return source(*args, **kwargs)
+
+    return function_to_inject
